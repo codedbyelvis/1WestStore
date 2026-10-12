@@ -1,0 +1,22 @@
+---
+import Menu from './BurgerMenu.astro';
+import Navigation from './Navigation.astro';
+import ThemeIcon from './ModeIcon.astro';
+
+---
+    <header>
+      <nav>
+        <div>
+        <ThemeIcon />
+        <Menu />
+        </div>
+        <Navigation />
+      </nav>
+    </header>
+
+  <style>
+  div {
+    display: flex;
+    justify-content: space-between;
+  }
+  </style>

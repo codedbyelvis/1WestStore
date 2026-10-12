@@ -1,0 +1,13 @@
+{
+  "title": "Test",
+  "price": 0,
+  "stock": 10,
+  "description": "This is a test.",
+  "tags": [
+    "Test"
+  ],
+  "image": {
+    "file": "../../assets/images/products/Test/image/file.jpg",
+    "alt": "A test that can not be eaten"
+  }
+}

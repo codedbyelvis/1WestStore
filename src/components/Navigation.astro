@@ -9,14 +9,14 @@ const isAdmin = pathname.startsWith('/admin');
 
 <nav>
   {isAdmin ? (
-    <!-- SET 1: Links for the Keystatic Admin panel -->
+    // SET 1: Links for the Keystatic Admin panel
     <div class="nav-links">
       <a href="/admin">Dashboard</a>
       <a href="/admin/content/products">Manage Products</a>
       <a href="/" target="_blank">View Live Store ↗</a>
     </div>
   ) : (
-    <!-- SET 2: Links for your Public Online Store -->
+    // SET 2: Links for your Public Online Store
     <div class="nav-links">
       <a href="/">Store</a>
       <a href="/cart">Cart</a>

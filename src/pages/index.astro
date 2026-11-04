@@ -1,16 +1,113 @@
 ---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getEntry } from 'astro:content';
+
+const pageTitle = "Home Page";
+
+// 1. Load all product JSON files directly using Vite's import.meta.glob
+const productFiles = import.meta.glob('/src/content/products/**/*.json', { eager: true });
+
+// Convert the imported module object into a clean array of product data
+const allProducts = Object.values(productFiles).map((file: any) => {
+  return file.default || file;
+});
+
+// Fetch the store settings singleton (or fallback gracefully if it fails)
+let categories = ['Test'];
+try {
+  const settings = await getEntry('storeSettings', 'index');
+  if (settings?.data?.categoryOrder) {
+    categories = settings.data.categoryOrder;
+  }
+} catch (e) {
+  console.log("Using default categories");
+}
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout pageTitle={pageTitle}>
+  {categories.map((category) => {
+    const matchingProducts = allProducts.filter((p: any) => {
+      const allProductTags = [
+        ...(p.presetTags || []),
+        ...(p.customTags || [])
+      ];
+      return allProductTags.some((tag) => tag.toLowerCase() === category.toLowerCase());
+    });
+
+    return (
+      <section style="margin-bottom: 2rem;">
+        <h2>{category.toUpperCase()}</h2>
+        
+        {matchingProducts.length === 0 ? (
+          <p>No products found in this category.</p>
+        ) : (
+          <ul>
+            {matchingProducts.map((product: any) => (
+              <li>
+                <h3>{product.title}</h3>
+                <p>{product.description}</p>
+                <p>Price: ${product.price}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    );
+  })}
+</BaseLayout>
+<!-- ^dev mode to keep working^ -->
+
+
+<!-- ---
+import { getCollection, getEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const allProducts = await getCollection('products');
+console.log("ALL PRODUCTS:", allProducts);
+const pageTitle = "Home Page";
+
+// Fetch the store settings singleton
+const settings = await getEntry('storeSettings', 'index');
+
+// Extract the categories defined by the user in Keystatic (fall back to an empty array if none set)
+const categories = settings?.data.categoryOrder || [];
+---
+
+<BaseLayout pageTitle={pageTitle}>
+
+    {categories.map((category) => {
+      // Filter products that contain the specific tag
+      // Combine preset and custom tags into one unified array for checking
+    const matchingProducts = allProducts.filter((p) => {
+      const allProductTags = [
+        ...(p.data.presetTags || []),
+        ...(p.data.customTags || [])
+      ];
+      return allProductTags.some((tag) => tag.toLowerCase() === category.toLowerCase());
+    });
+      
+		//   // If there are no products in this category, don't render anything
+		// 	if (matchingProducts.length === 0) {
+		// 		return null;
+		// 	}
+
+      return (
+        <section style="margin-bottom: 2rem; backgroundcolor: red;">
+          <h2>{category.toUpperCase()}</h2>
+          
+          {matchingProducts.length === 0 ? (
+            <p>No products found in this category.</p>
+          ) : (
+            <ul>
+              {matchingProducts.map((product) => (
+                <li>
+                  <h3>{product.data.title}</h3>
+                  <p>{product.data.description}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      );
+    })}
+  </BaseLayout> -->

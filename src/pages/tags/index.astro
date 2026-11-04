@@ -1,0 +1,37 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const pageTitle = "Product Tags";
+
+// Fetch all product JSON files directly using Vite's glob
+const productFiles = import.meta.glob('/src/content/products/**/*.json', { eager: true });
+const allProducts = Object.values(productFiles).map((file: any) => file.default || file);
+
+// Extract all unique preset and custom tags from your products list safely
+const tags = [
+  ...new Set(
+    allProducts.flatMap((product: any) => [
+      ...(product.presetTags || []),
+      ...(product.customTags || [])
+    ])
+  )
+];
+---
+
+<BaseLayout pageTitle={pageTitle}>
+  <section style="margin-bottom: 2rem;">
+    <h2>All Product Tags</h2>
+    
+    {tags.length === 0 ? (
+      <p>No tags found.</p>
+    ) : (
+      <ul>
+        {tags.map((tag) => (
+          <li>
+            <a href={`/tags/${tag.toLowerCase()}`}>{tag}</a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </section>
+</BaseLayout>

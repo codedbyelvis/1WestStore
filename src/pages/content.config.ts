@@ -7,10 +7,11 @@ const products = defineCollection({
   loader: glob({ pattern: '**/*.json', base: './src/content/products' }),
   schema: z.object({
     title: z.string(),
-    price: z.number(),
+    price: z.number().default(0),
     stock: z.number().default(0),
     description: z.string(),
-    tags: z.array(z.string()),
+    presetTags: z.array(z.string()).optional().default([]),
+    customTags: z.array(z.string()).optional().default([]),
     image: z.object({
       file: z.string().nullable().optional(), // Keystatic saves the image path/string here
       alt: z.string(),
@@ -18,4 +19,11 @@ const products = defineCollection({
   }),
 });
 
-export const collections = { products };
+const storeSettings = defineCollection({
+  loader: glob({ base: './src/content/storeSettings', pattern: '*.{json,yaml}' }),
+  schema: z.object({
+    categoryOrder: z.array(z.string()),
+  }),
+});
+
+export const collections = { products, storeSettings };

@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/BaseLayout.astro';
+import defaultImage from '../../assets/images/products/default.png';
 
 export async function getStaticPaths() {
   const products = await getCollection('products');
@@ -12,9 +13,13 @@ export async function getStaticPaths() {
 
 const { product } = Astro.props;
 const { Content } = await render(product);
+
+const imageSrc = product.data.image?.file || defaultImage;
+const imageAlt = product.data.image?.alt || 'Default product placeholder image';
 ---
 
 <Layout title={product.data.title}>
+  <img src={imageSrc.src || imageSrc} alt={imageAlt} class="product-image" />
   <h1>{product.data.title}</h1>
   <p>${product.data.price}</p>
   <p>{product.data.description}</p>

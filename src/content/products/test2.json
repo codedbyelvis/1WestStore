@@ -1,0 +1,14 @@
+{
+  "title": "Test",
+  "price": 0,
+  "stock": 10,
+  "description": "A 2nd test for twice the price.",
+  "presetTags": [
+    "Test"
+  ],
+  "customTags": [],
+  "image": {
+    "file": "../../assets/images/products/Test/image/file.jpg",
+    "alt": "Double the trouble with this test."
+  }
+}

@@ -1,0 +1,44 @@
+---
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allProducts = await getCollection('products');
+  
+  // Extract all unique tags
+  const uniqueTags = [...new Set(allProducts.flatMap((product) => product.data.tags))];
+
+  // Generate a route for every unique tag
+  return uniqueTags.map((tag) => {
+    const filteredProducts = allProducts.filter((product) => 
+      product.data.tags.includes(tag)
+    );
+    return {
+      params: { tag },
+      props: { products: filteredProducts },
+    };
+  });
+}
+
+const { tag } = Astro.params;
+const { products } = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <title>Products tagged with {tag}</title>
+  </head>
+  <body>
+    <h1>Products tagged with: <span>{tag}</span></h1>
+    
+    <ul>
+      {products.map((product) => (
+        <li>
+          <a href={`/products/${product.id}`}>{product.data.title}</a>
+          <p>{product.data.description}</p>
+        </li>
+      ))}
+    </ul>
+    
+    <a href="/tags">← Back to all tags</a>
+  </body>
+</html>

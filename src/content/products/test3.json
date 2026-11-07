@@ -1,5 +1,5 @@
 {
-  "title": "test3",
+  "title": "Test 3",
   "price": 3,
   "stock": 3,
   "description": "3rd time's the charm",
@@ -8,7 +8,7 @@
   ],
   "customTags": [],
   "image": {
-    "file": "../../assets/images/products/test3/image/file.jpg",
+    "file": "/images/products/test3/image/file.jpg",
     "alt": "a 3rd test that can still not be eaten"
   }
 }

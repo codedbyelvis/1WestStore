@@ -1,6 +1,6 @@
 {
   "title": "Test",
-  "price": 0,
+  "price": 1,
   "stock": 10,
   "description": "This is a test.",
   "presetTags": [
@@ -8,7 +8,7 @@
   ],
   "customTags": [],
   "image": {
-    "file": "../../assets/images/products/Test/image/file.jpg",
+    "file": "/images/products/Test/image/file.jpg",
     "alt": "A test that can not be eaten"
   }
 }

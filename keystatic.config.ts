@@ -43,8 +43,8 @@ export default config({
         {
             file: fields.image({
             label: 'Upload Image',
-            directory: 'src/assets/images/products',
-            publicPath: '../../assets/images/products/',
+            directory: 'public/images/products',
+            publicPath: '/images/products/',
             }),
             alt: fields.text({
             label: 'Image Alt Text',

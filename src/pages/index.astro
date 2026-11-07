@@ -61,7 +61,15 @@ try {
           <p>{product.description}</p>
           <div class="price">${product.price}</div>
         </div>
-        <button type="button" class="cart-btn">Add to Cart</button>
+        <button 
+          type="button" 
+          class="btn cart-btn" 
+          data-title={product.title} 
+          data-price={product.price} 
+          data-image={product.image?.file}
+        >
+          Add to Cart
+        </button>
       </div>
           );
         })}

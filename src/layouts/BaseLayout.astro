@@ -18,5 +18,41 @@ const { pageTitle } = Astro.props;
     <h1>{pageTitle}</h1>
     <slot />
     <Footer />
+    
+    <!-- Global Cart Script -->
+    <script>
+      // Run this globally or include it in your layout
+document.addEventListener('click', (event) => {
+  if (event.target.classList.contains('cart-btn')) {
+    const btn = event.target;
+
+    // Safeguard: Exit early if there's no product title attached
+    if (!btn.dataset.title) return;
+
+    const item = {
+      title: btn.dataset.title,
+      price: parseFloat(btn.dataset.price),
+      image: btn.dataset.image,
+      quantity: 1
+    };
+
+    // Get existing cart or empty array
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+    // Check if item is already in cart
+    const existingIndex = cart.findIndex(cartItem => cartItem.title === item.title);
+    if (existingIndex > -1) {
+      cart[existingIndex].quantity += 1;
+    } else {
+      cart.push(item);
+    }
+
+    // Save back to localStorage
+    localStorage.setItem('cart', JSON.stringify(cart));
+    alert(`${item.title} added to cart!`);
+  }
+});
+    </script>
+
   </body>
 </html>

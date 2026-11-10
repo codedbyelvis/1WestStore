@@ -1,0 +1,62 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout pageTitle="Make an Item Suggestion">
+	<p>Have an idea for a new product or flavor? Let us know below!</p>
+
+	<form id="suggestion-form" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px; max-width: 600px;">
+		<div>
+			<label for="suggestionText" style="display: block; font-weight: bold; margin-bottom: 5px;">Your Suggestion</label>
+			<textarea id="suggestionText" name="suggestionText" rows="4" required style="width: 100%; padding: 8px;"></textarea>
+		</div>
+
+		<div>
+			<label for="suggestionURL" style="display: block; font-weight: bold; margin-bottom: 5px;">Reference URL (Optional)</label>
+			<input type="url" id="suggestionURL" name="suggestionURL" placeholder="www.example.com/yummy_drink" style="width: 100%; padding: 8px;" />
+		</div>
+
+		<button type="submit" style="background: #000; color: #fff; padding: 10px 15px; border: none; cursor: pointer; font-weight: bold;">
+			Submit Suggestion
+		</button>
+	</form>
+
+	<p id="response-message" style="margin-top: 20px; font-weight: bold;"></p>
+
+	<script>
+		const form = document.getElementById('suggestion-form');
+		const responseMessage = document.getElementById('response-message');
+
+		form.addEventListener('submit', async (e) => {
+			e.preventDefault();
+
+			const suggestionText = document.getElementById('suggestionText').value;
+			const suggestionURL = document.getElementById('suggestionURL').value;
+
+			// Pull customer name from localStorage if it exists from your future feature
+			const optionalCustomerName = localStorage.getItem('customerName') || 'Anonymous';
+
+			try {
+				const res = await fetch('/api/submit-suggestion', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ suggestionText, suggestionURL, optionalCustomerName })
+				});
+
+				const result = await res.json();
+
+				if (result.success) {
+					responseMessage.style.color = 'green';
+					responseMessage.textContent = 'Thank you! Your suggestion has been saved and we will get to it as soon as we can.';
+					form.reset();
+				} else {
+					responseMessage.style.color = 'red';
+					responseMessage.textContent = 'Error submitting suggestion: ' + result.error;
+				}
+			} catch (err) {
+				responseMessage.style.color = 'red';
+				responseMessage.textContent = 'Network error. Please try again.';
+			}
+		});
+	</script>
+</BaseLayout>

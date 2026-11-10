@@ -4,11 +4,12 @@ const pageTitle = "Your Shopping Cart";
 ---
 
 <BaseLayout pageTitle={pageTitle}>
-
   <!-- Cart Container (Populated by JavaScript) -->
   <div id="cart-container">
     <p>Loading your cart...</p>
   </div>
+  <!-- Success message area matching suggestion page style -->
+  <p id="response-message" style="margin-top: 20px; font-weight: bold; white-space: pre-line;"></p>
 </BaseLayout>
 
 <script>
@@ -16,7 +17,62 @@ const pageTitle = "Your Shopping Cart";
     title: string;
     price: number;
     image: string;
+    slug: string;
     quantity: number;
+  }
+
+  async function handleCheckout(paymentType: string, grandTotal: number, paymentUrl: string) {
+    const cart: CartItem[] = JSON.parse(localStorage.getItem('cart') || '[]');
+    if (cart.length === 0) return;
+
+    const optionalCustomerName = localStorage.getItem('customerName') || 'Guest';
+    const responseMessage = document.getElementById('response-message');
+
+    try {
+      // 1. Call backend to log transaction and update stock
+      const response = await fetch('/api/submit-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          transactionAmount: grandTotal, 
+          optionalCustomerName,
+          items: cart 
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // 2. Clear cart from localStorage
+        localStorage.removeItem('cart');
+        
+        // 3. Save transaction ID in sessionStorage so it persists even if views re-render
+        sessionStorage.setItem('lastTransactionID', result.transactionID);
+
+        // 4. Open payment app in new tab
+        window.open(paymentUrl, '_blank');
+        
+        // 5. Re-render cart view to empty state
+        renderCart();
+
+        // 6. Show green confirmation message at the bottom (matching suggestions page style)
+        if (responseMessage) {
+          responseMessage.style.color = 'green';
+          responseMessage.textContent = `Order Logged Successfully! Your Transaction ID is: ${result.transactionID}\n\nPlease save this reference number for any payment issues.`;
+        }
+      } else {
+        if (responseMessage) {
+          responseMessage.style.color = 'red';
+          responseMessage.textContent = 'Could not generate transaction: ' + result.error;
+        }
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      if (responseMessage) {
+        responseMessage.style.color = 'red';
+        responseMessage.textContent = 'Network error communicating with the store server.';
+      }
+    }
   }
 
   function renderCart() {
@@ -24,6 +80,8 @@ const pageTitle = "Your Shopping Cart";
     if (!container) return;
 
     const cart: CartItem[] = JSON.parse(localStorage.getItem('cart') || '[]');
+    const storedTransactionID = sessionStorage.getItem('lastTransactionID');
+    const responseMessage = document.getElementById('response-message');
 
     // 1. Empty State Logic
     if (cart.length === 0) {
@@ -33,7 +91,18 @@ const pageTitle = "Your Shopping Cart";
           <a href="/" class="btn return-btn" style="display: inline-block; text-decoration: none; margin-top: 10px;">Return to Store</a>
         </div>
       `;
+
+      // If a recent transaction exists in session storage, ensure the green success message is displayed
+      if (storedTransactionID && responseMessage) {
+        responseMessage.style.color = 'green';
+        responseMessage.textContent = `Order Logged Successfully! Your Transaction ID is: ${storedTransactionID}\n\nPlease save this reference number for any payment issues.`;
+      }
       return;
+    }
+
+    // Clear any leftover success message if items are added back to the cart
+    if (responseMessage && !storedTransactionID) {
+      responseMessage.textContent = '';
     }
 
     // 2. Populated State Logic
@@ -55,7 +124,6 @@ const pageTitle = "Your Shopping Cart";
           </div>
 
           <div style="display: flex; align-items: center; gap: 12px;">
-            <!-- Quantity Controls with Up/Down arrows -->
             <div style="display: flex; align-items: center; border: 1px solid #d1d5db; border-radius: 4px; overflow: hidden;">
               <button class="qty-btn decrease" data-index="${index}" style="background: #f3f4f6; border: none; padding: 4px 10px; cursor: pointer;">-</button>
               <span style="padding: 0 12px; font-weight: 600;">${item.quantity}</span>
@@ -81,18 +149,20 @@ const pageTitle = "Your Shopping Cart";
         </div>
 
         <h3>Choose Payment Method</h3>
+        <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 12px;">Choosing Venmo or CashApp will log your transaction as Pending and open payment.</p>
+        
         <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
-          <a href="https://venmo.com/DaElvis?txn=pay&amount=${grandTotal}&note=1WestStore" target="_blank" class="checkout-btn" style="flex: 1; min-width: 140px; padding: 12px; background: #008CFF; color: white; text-align: center; text-decoration: none; border-radius: 6px; font-weight: bold;">
+          <button type="button" id="venmo-btn" style="flex: 1; min-width: 140px; padding: 12px; background: #008CFF; color: white; border: none; text-align: center; border-radius: 6px; font-weight: bold; cursor: pointer;">
             Venmo
-          </a>
+          </button>
           
           <button type="button" id="stripe-btn" style="flex: 1; min-width: 140px; padding: 12px; background: #635bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
             Credit Card (Stripe)
           </button>
 
-          <a href="https://cash.app/$ElvisHerna1/${grandTotal}" target="_blank" class="checkout-btn" style="flex: 1; min-width: 140px; padding: 12px; background: #00D632; color: white; text-align: center; text-decoration: none; border-radius: 6px; font-weight: bold;">
+          <button type="button" id="cashapp-btn" style="flex: 1; min-width: 140px; padding: 12px; background: #00D632; color: white; border: none; text-align: center; border-radius: 6px; font-weight: bold; cursor: pointer;">
             CashApp
-          </a>
+          </button>
         </div>
       </div>
     `;
@@ -110,20 +180,38 @@ const pageTitle = "Your Shopping Cart";
         } else if (target.classList.contains('decrease')) {
           cart[index].quantity -= 1;
           if (cart[index].quantity <= 0) {
-            cart.splice(index, 1); // Remove item if quantity drops to 0
+            cart.splice(index, 1);
           }
         }
 
         localStorage.setItem('cart', JSON.stringify(cart));
-        renderCart(); // Re-render the cart view
+        renderCart();
       });
     });
+
+    // Venmo checkout trigger
+    const venmoBtn = document.getElementById('venmo-btn');
+    if (venmoBtn) {
+      venmoBtn.addEventListener('click', () => {
+        const venmoUrl = `https://venmo.com/DaElvis?txn=pay&amount=${grandTotal}&note=1WestStore`;
+        handleCheckout('Venmo', grandTotal, venmoUrl);
+      });
+    }
+
+    // CashApp checkout trigger
+    const cashappBtn = document.getElementById('cashapp-btn');
+    if (cashappBtn) {
+      cashappBtn.addEventListener('click', () => {
+        const cashAppUrl = `https://cash.app/$ElvisHerna1/${grandTotal}`;
+        handleCheckout('CashApp', grandTotal, cashAppUrl);
+      });
+    }
 
     // Stripe placeholder button handler
     const stripeBtn = document.getElementById('stripe-btn');
     if (stripeBtn) {
       stripeBtn.addEventListener('click', () => {
-        alert("Credit Card checkout via Stripe is coming soon! Set up your API keys later.");
+        alert("Credit Card checkout via Stripe is coming soon!");
       });
     }
   }

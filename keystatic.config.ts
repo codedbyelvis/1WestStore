@@ -11,7 +11,7 @@ export default config({
       label: 'Products',
       slugField: 'title',
       path: 'src/content/products/*',
-      format: { data: 'json' }, // or 'yaml' for structured product data
+      format: { data: 'json' },
       schema: {
         title: fields.slug({ name: { label: 'Product Name',
           description: 'Please name the Slug the same as this title.'
@@ -19,7 +19,6 @@ export default config({
         price: fields.number({ label: 'Price ($)' }),
         stock: fields.number({ label: 'Stock Quantity', defaultValue: 0 }),
         description: fields.text({ label: 'Description', multiline: true }),
-        // Add tags field: allows multiple tags per product (e.g., "caffeinated")
         presetTags: fields.multiselect({
           label: 'Existing Tags',
           description: 'Select from existing categories.',
@@ -30,7 +29,6 @@ export default config({
           ],
           defaultValue: [],
         }),
-
         customTags: fields.array(
           fields.text({ label: 'Custom Tag' }),
           {
@@ -58,9 +56,98 @@ export default config({
         ),
       },
     }),
-  },
 
-  // Add this singleton for store settings
+    // --- Customer Suggestions Collection ---
+    suggestions: collection({
+      label: 'Customer Suggestions',
+      slugField: 'suggestionID',
+      path: 'src/content/suggestions/*',
+      format: { data: 'json' },
+      schema: {
+        suggestionID: fields.slug({
+          name: {
+            label: 'Suggestion ID',
+            description: 'Unique ID for this suggestion (e.g., SUG-2026-001)',
+          },
+        }),
+        date: fields.text({
+          label: 'Date',
+          description: 'Date the suggestion was submitted',
+        }),
+        suggestionText: fields.text({
+          label: 'Suggestion Text',
+          multiline: true,
+          description: 'What the customer suggested',
+        }),
+        suggestionURL: fields.url({
+          label: 'Suggestion URL',
+          description: 'Optional reference link provided by customer',
+        }),
+        optionalImage: fields.image({
+          label: 'Optional Image',
+          directory: 'public/images/suggestions',
+          publicPath: '/images/suggestions/',
+        }),
+        optionalCustomerName: fields.text({
+          label: 'Customer Name',
+          description: 'Name of customer if provided',
+        }),
+      },
+    }),
+
+    // --- Transactions Collection ---
+    transactions: collection({
+      label: 'Transactions',
+      slugField: 'transactionID',
+      path: 'src/content/transactions/*',
+      format: { data: 'json' },
+      
+      //Columns configuration to make scanning status and totals seamless in the Keystatic dashboard
+      columns: ['transactionStatus', 'transactionAmount', 'optionalCustomerName', 'inventoryAlert'],
+
+      schema: {
+        transactionID: fields.slug({
+          name: {
+            label: 'Transaction ID',
+            description: 'Generated transaction reference number',
+          },
+        }),
+        dateTime: fields.text({
+          label: 'Date and Time',
+          description: 'Timestamp when the order was placed',
+        }),
+        transactionStatus: fields.select({
+          label: 'Transaction Status',
+          description: 'Isolated tag system for payment processing',
+          defaultValue: 'pending',
+          options: [
+            { label: 'Pending', value: 'pending' },
+            { label: 'Paid', value: 'paid' },
+            { label: 'Not Paid', value: 'not_paid' },
+          ],
+        }),
+        
+        // --- Oversold / Stock Warning Tag ---
+        inventoryAlert: fields.select({
+          label: 'Inventory Alert',
+          description: 'Automatically flagged if ordered quantity exceeded online stock.',
+          defaultValue: 'normal',
+          options: [
+            { label: 'Normal Order', value: 'normal' },
+            { label: '⚠️ Oversold (Check In-Person Stock)', value: 'oversold' },
+          ],
+        }),
+        transactionAmount: fields.number({
+          label: 'Transaction Amount ($)',
+        }),
+        optionalCustomerName: fields.text({
+          label: 'Customer Name',
+          description: 'Name of customer (or saved local storage name)',
+        }),
+      },
+    }),
+  }, // <--- Collections object closes correctly here now
+
   singletons: {
     storeSettings: singleton({
       label: 'Store Settings',
